@@ -18,8 +18,8 @@ class HDF5VLADataset:
     def __init__(self) -> None:
         # [Modify] The path to the HDF5 dataset directory
         # Each HDF5 file contains one episode
-        HDF5_DIR = "data/datasets/agilex/rdt_data/"
-        self.DATASET_NAME = "agilex"
+        HDF5_DIR = "/home/silei/WorkSpace_git/RoboticsDiffusionTransformer/data/datasets/my_franka/rdt_data/"
+        self.DATASET_NAME = "my_pickplace_dataset"
         
         self.file_paths = []
         for root, _, files in os.walk(HDF5_DIR):
@@ -28,7 +28,7 @@ class HDF5VLADataset:
                 self.file_paths.append(file_path)
                 
         # Load the config
-        with open('configs/base.yaml', 'r') as file:
+        with open('configs/base_test.yaml', 'r') as file:
             config = yaml.safe_load(file)
         self.CHUNK_SIZE = config['common']['action_chunk_size']
         self.IMG_HISORY_SIZE = config['common']['img_history_size']
@@ -134,8 +134,10 @@ class HDF5VLADataset:
             
             # Load the instruction
             dir_path = os.path.dirname(file_path)
-            with open(os.path.join(dir_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
+            # with open(os.path.join(dir_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
+            with open(os.path.join(dir_path, 'instructions.json'), 'r') as f_instr:
                 instruction_dict = json.load(f_instr)
+
             # We have 1/3 prob to use original instruction,
             # 1/3 to use simplified instruction,
             # and 1/3 to use expanded instruction.
@@ -155,12 +157,20 @@ class HDF5VLADataset:
                 "instruction": instruction
             }
             
+            # # Rescale gripper to [0, 1]
+            # qpos = qpos / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
+            # )
+            # target_qpos = f['action'][step_id:step_id+self.CHUNK_SIZE] / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
+            # )
+
             # Rescale gripper to [0, 1]
             qpos = qpos / np.array(
-               [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
+               [[1, 1, 1, 1, 1, 1, 1, 1]] 
             )
             target_qpos = f['action'][step_id:step_id+self.CHUNK_SIZE] / np.array(
-               [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
+               [[1, 1, 1, 1, 1, 1, 1, 1]] 
             )
             
             # Parse the state and action
@@ -170,7 +180,7 @@ class HDF5VLADataset:
             state_norm = np.sqrt(np.mean(qpos**2, axis=0))
             actions = target_qpos
             if actions.shape[0] < self.CHUNK_SIZE:
-                # Pad the actions using the last action
+                # Pad the actions using the last action 当剩余步数不足时，用最后一个动作填充
                 actions = np.concatenate([
                     actions,
                     np.tile(actions[-1:], (self.CHUNK_SIZE-actions.shape[0], 1))
@@ -181,15 +191,11 @@ class HDF5VLADataset:
                 # Target indices corresponding to your state space
                 # In this example: 6 joints + 1 gripper for each arm
                 UNI_STATE_INDICES = [
-                    STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(7)
                 ] + [
-                    STATE_VEC_IDX_MAPPING["left_gripper_open"]
-                ] + [
-                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
-                ] + [
-                    STATE_VEC_IDX_MAPPING["right_gripper_open"]
+                    STATE_VEC_IDX_MAPPING[f"right_gripper_joint_0_pos"]
                 ]
-                uni_vec = np.zeros(values.shape[:-1] + (self.STATE_DIM,))
+                uni_vec = np.zeros(values.shape[:-1] + (self.STATE_DIM,))   #[steps, 128]
                 uni_vec[..., UNI_STATE_INDICES] = values
                 return uni_vec
             state = fill_in_state(state)
@@ -222,10 +228,13 @@ class HDF5VLADataset:
             cam_high_mask = np.array(
                 [False] * (self.IMG_HISORY_SIZE - valid_len) + [True] * valid_len
             )
-            cam_left_wrist = parse_img('cam_left_wrist')
-            cam_left_wrist_mask = cam_high_mask.copy()
-            cam_right_wrist = parse_img('cam_right_wrist')
-            cam_right_wrist_mask = cam_high_mask.copy()
+            # cam_left_wrist = parse_img('cam_left_wrist')
+            # cam_left_wrist_mask = cam_high_mask.copy()
+            # cam_right_wrist = parse_img('cam_right_wrist')
+            # cam_right_wrist_mask = cam_high_mask.copy()
+
+            cam_wrist = parse_img('cam_wrist')
+            cam_wrist_mask = cam_high_mask.copy()
             
             # Return the resulting sample
             # For unavailable images, return zero-shape arrays, i.e., (IMG_HISORY_SIZE, 0, 0, 0)
@@ -233,18 +242,21 @@ class HDF5VLADataset:
             # if the left-wrist camera is unavailable on your robot
             return True, {
                 "meta": meta,
-                "state": state,
-                "state_std": state_std,
-                "state_mean": state_mean,
-                "state_norm": state_norm,
-                "actions": actions,
-                "state_indicator": state_indicator,
-                "cam_high": cam_high,
-                "cam_high_mask": cam_high_mask,
-                "cam_left_wrist": cam_left_wrist,
-                "cam_left_wrist_mask": cam_left_wrist_mask,
-                "cam_right_wrist": cam_right_wrist,
-                "cam_right_wrist_mask": cam_right_wrist_mask
+                "state": state,                 # shape: (1, STATE_DIM)
+                "state_std": state_std,         # shape: (STATE_DIM,)
+                "state_mean": state_mean,       # shape: (STATE_DIM,)
+                "state_norm": state_norm,       # shape: (STATE_DIM,)
+                "actions": actions,             # shape: (CHUNK_SIZE, STATE_DIM)
+                "state_indicator": state_indicator,     # shape: (STATE_DIM,)
+                "cam_high": cam_high,           # shape: (IMG_HISTORY_SIZE, H, W, 3)
+                "cam_high_mask": cam_high_mask, 
+                # "cam_left_wrist": cam_left_wrist,
+                # "cam_left_wrist_mask": cam_left_wrist_mask,
+                # "cam_right_wrist": cam_right_wrist,
+                # "cam_right_wrist_mask": cam_right_wrist_mask
+ 
+                "cam_wrist": cam_wrist,
+                "cam_wrist_mask": cam_wrist_mask
             }
 
     def parse_hdf5_file_state_only(self, file_path):
@@ -279,12 +291,20 @@ class HDF5VLADataset:
             else:
                 raise ValueError("Found no qpos that exceeds the threshold.")
             
+            # # Rescale gripper to [0, 1]
+            # qpos = qpos / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
+            # )
+            # target_qpos = f['action'][:] / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
+            # )
+
             # Rescale gripper to [0, 1]
             qpos = qpos / np.array(
-               [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
+               [[1, 1, 1, 1, 1, 1, 1, 1]] 
             )
             target_qpos = f['action'][:] / np.array(
-               [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
+               [[1, 1, 1, 1, 1, 1, 1, 1]] 
             )
             
             # Parse the state and action
@@ -296,13 +316,9 @@ class HDF5VLADataset:
                 # Target indices corresponding to your state space
                 # In this example: 6 joints + 1 gripper for each arm
                 UNI_STATE_INDICES = [
-                    STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(7)
                 ] + [
-                    STATE_VEC_IDX_MAPPING["left_gripper_open"]
-                ] + [
-                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
-                ] + [
-                    STATE_VEC_IDX_MAPPING["right_gripper_open"]
+                    STATE_VEC_IDX_MAPPING["right_gripper_joint_0_pos"]
                 ]
                 uni_vec = np.zeros(values.shape[:-1] + (self.STATE_DIM,))
                 uni_vec[..., UNI_STATE_INDICES] = values
