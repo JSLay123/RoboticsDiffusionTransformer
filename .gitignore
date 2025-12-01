@@ -183,8 +183,12 @@ wandb/
 hostfile.txt
 .deepspeed_env
 
+# ----------------------------------------------------
 # encoder 
 lang_img_encoder/
 
 # dataset
 ./data/datasets/my_franka/
+
+# pretrained model
+rdt-1b/
