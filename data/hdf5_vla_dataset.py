@@ -228,13 +228,13 @@ class HDF5VLADataset:
             cam_high_mask = np.array(
                 [False] * (self.IMG_HISORY_SIZE - valid_len) + [True] * valid_len
             )
-            # cam_left_wrist = parse_img('cam_left_wrist')
-            # cam_left_wrist_mask = cam_high_mask.copy()
+            cam_left_wrist = parse_img('cam_left_wrist')
+            cam_left_wrist_mask = cam_high_mask.copy()
             # cam_right_wrist = parse_img('cam_right_wrist')
             # cam_right_wrist_mask = cam_high_mask.copy()
 
-            cam_wrist = parse_img('cam_wrist')
-            cam_wrist_mask = cam_high_mask.copy()
+            cam_right_wrist = parse_img('cam_wrist')
+            cam_right_wrist_mask = cam_high_mask.copy()
             
             # Return the resulting sample
             # For unavailable images, return zero-shape arrays, i.e., (IMG_HISORY_SIZE, 0, 0, 0)
@@ -250,13 +250,10 @@ class HDF5VLADataset:
                 "state_indicator": state_indicator,     # shape: (STATE_DIM,)
                 "cam_high": cam_high,           # shape: (IMG_HISTORY_SIZE, H, W, 3)
                 "cam_high_mask": cam_high_mask, 
-                # "cam_left_wrist": cam_left_wrist,
-                # "cam_left_wrist_mask": cam_left_wrist_mask,
-                # "cam_right_wrist": cam_right_wrist,
-                # "cam_right_wrist_mask": cam_right_wrist_mask
- 
-                "cam_wrist": cam_wrist,
-                "cam_wrist_mask": cam_wrist_mask
+                "cam_left_wrist": cam_left_wrist,
+                "cam_left_wrist_mask": cam_left_wrist_mask,
+                "cam_right_wrist": cam_right_wrist,
+                "cam_right_wrist_mask": cam_right_wrist_mask
             }
 
     def parse_hdf5_file_state_only(self, file_path):
