@@ -10,7 +10,7 @@ from models.multimodal_encoder.t5_encoder import T5Embedder
 
 GPU = 0
 MODEL_PATH = "google/t5-v1_1-xxl"
-CONFIG_PATH = "configs/base.yaml"
+CONFIG_PATH = "configs/base_test.yaml"
 # Modify the TARGET_DIR to your dataset path
 TARGET_DIR = "data/datasets/agilex/tfrecords/"
 
