@@ -1,4 +1,6 @@
-import os
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import fnmatch
 import json
 
@@ -213,6 +215,7 @@ class HDF5VLADataset:
                 for i in range(max(step_id-self.IMG_HISORY_SIZE+1, 0), step_id+1):
                     img = f['observations']['images'][key][i]
                     imgs.append(cv2.imdecode(np.frombuffer(img, np.uint8), cv2.IMREAD_COLOR))
+                    # print("[DEBUG] imgs[-1].shape",imgs[-1].shape)
                 imgs = np.stack(imgs)
                 if imgs.shape[0] < self.IMG_HISORY_SIZE:
                     # Pad the images using the first image
@@ -334,4 +337,4 @@ if __name__ == "__main__":
     ds = HDF5VLADataset()
     for i in range(len(ds)):
         print(f"Processing episode {i}/{len(ds)}...")
-        ds.get_item(i)
+        print(ds.get_item(i))
