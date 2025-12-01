@@ -577,9 +577,9 @@
     "my_pickplace_dataset": {
         "image_keys": [
             "cam_high",
-            "cam_wrist",
-            "images0",
-            "images0"
+            "cam_right_wrist",
+            "cam_left_wrist",
+            "cam_right_wrist"
         ],
         "image_mask":[1,1,0,0]
     }
