@@ -1,4 +1,5 @@
-import os
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 
 import torch
@@ -12,11 +13,14 @@ GPU = 0
 MODEL_PATH = "google/t5-v1_1-xxl"
 CONFIG_PATH = "configs/base_test.yaml"
 # Modify the TARGET_DIR to your dataset path
-TARGET_DIR = "data/datasets/agilex/tfrecords/"
+# TARGET_DIR = "data/datasets/agilex/tfrecords/"
+TARGET_DIR = "/home/silei/WorkSpace_git/RoboticsDiffusionTransformer/data/datasets/my_franka/"
 
 # Note: if your GPU VRAM is less than 24GB, 
 # it is recommended to enable offloading by specifying an offload directory.
-OFFLOAD_DIR = None  # Specify your offload directory here, ensuring the directory exists.
+# OFFLOAD_DIR = None  # Specify your offload directory here, ensuring the directory exists.
+OFFLOAD_DIR = "./offload_t5xxl/"
+os.makedirs(OFFLOAD_DIR, exist_ok=True)
 
 def main():
     with open(CONFIG_PATH, "r") as fp:
@@ -44,11 +48,11 @@ def main():
     # For each task, encode the instructions
     for task_path in tqdm(task_paths):
         # Load the instructions corresponding to the task from the directory
-        with open(os.path.join(task_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
+        # with open(os.path.join(task_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
+        with open(os.path.join(task_path, 'instructions_003.json'), 'r') as f_instr:
             instruction_dict = json.load(f_instr)
-        instructions = [instruction_dict['instruction']] + instruction_dict['simplified_instruction'] + \
+        instructions = instruction_dict['instruction'] + instruction_dict['simplified_instruction'] + \
             instruction_dict['expanded_instruction']
-    
         # Encode the instructions
         tokenized_res = tokenizer(
             instructions, return_tensors="pt",

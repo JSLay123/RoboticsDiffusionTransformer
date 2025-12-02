@@ -137,20 +137,37 @@ class HDF5VLADataset:
             # Load the instruction
             dir_path = os.path.dirname(file_path)
             # with open(os.path.join(dir_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
-            with open(os.path.join(dir_path, 'instructions.json'), 'r') as f_instr:
-                instruction_dict = json.load(f_instr)
+            # with open(os.path.join(dir_path, 'instructions.json'), 'r') as f_instr:
+            #     instruction_dict = json.load(f_instr)
 
             # We have 1/3 prob to use original instruction,
             # 1/3 to use simplified instruction,
             # and 1/3 to use expanded instruction.
-            instruction_type = np.random.choice([
-                'instruction', 'simplified_instruction', 'expanded_instruction'])
-            instruction = instruction_dict[instruction_type]
-            if isinstance(instruction, list):
-                instruction = np.random.choice(instruction)
-            # You can also use precomputed language embeddings (recommended)
-            # instruction = "path/to/lang_embed.pt"
+            # instruction_type = np.random.choice([
+            #     'instruction', 'simplified_instruction', 'expanded_instruction'])
+            # instruction = instruction_dict[instruction_type]
+            # if isinstance(instruction, list):
+            #     instruction = np.random.choice(instruction)
             
+            # You can also use precomputed language embeddings (recommended)
+            # instruction = "/home/silei/WorkSpace_git/RoboticsDiffusionTransformer/data/datasets/my_franka/rdt_data/task1/lang_embed_3.pt"
+            
+            # ----------------instruction choice--------------------
+            # 获取当前 task 文件夹下所有 lang_embed_*.pt
+            embed_files = [
+                f for f in os.listdir(dir_path)
+                if f.startswith("lang_embed_") and f.endswith(".pt")
+            ]
+            assert len(embed_files) > 0, f"No precomputed embeddings found in {dir_path}"
+            # 排序（确保与 encode_lang_batch.py 中的保存顺序对应）
+            embed_files = sorted(
+                embed_files,
+                key=lambda x: int(x.split("_")[-1].split(".")[0])
+            )
+            # print("[DEBUG] embed_files: [",embed_files)
+            # 随机选择一个（等价于原来随机选一句 instruction）
+            instruction = os.path.join(dir_path, np.random.choice(embed_files))
+
             # Assemble the meta
             meta = {
                 "dataset_name": self.DATASET_NAME,
@@ -337,4 +354,4 @@ if __name__ == "__main__":
     ds = HDF5VLADataset()
     for i in range(len(ds)):
         print(f"Processing episode {i}/{len(ds)}...")
-        print(ds.get_item(i))
+        # print(ds.get_item(i))
