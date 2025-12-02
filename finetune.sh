@@ -6,6 +6,9 @@ export NCCL_NVLS_ENABLE=0
 
 export TEXT_ENCODER_NAME="google/t5-v1_1-xxl"
 export VISION_ENCODER_NAME="google/siglip-so400m-patch14-384"
+
+# export TEXT_ENCODER_NAME="/home/silei/WorkSpace_git/RoboticsDiffusionTransformer/google/t5-v1_1-xxl"
+# export VISION_ENCODER_NAME="/home/silei/WorkSpace_git/RoboticsDiffusionTransformer/google/siglip-so400m-patch14-384"
 export OUTPUT_DIR="./checkpoints/rdt-finetune-1b"
 export CFLAGS="-I/usr/include"
 export LDFLAGS="-L/usr/lib/x86_64-linux-gnu"
@@ -25,9 +28,10 @@ fi
 #     --deepspeed="./configs/zero2.json" \
 #     ...
 
-deepspeed --hostfile=hostfile.txt main.py \
+# deepspeed --hostfile=hostfile.txt main.py \
+accelerate launch main.py \
     --deepspeed="./configs/zero2.json" \
-    --pretrained_model_name_or_path="robotics-diffusion-transformer/rdt-1b" \
+    --pretrained_model_name_or_path="/home/silei/WorkSpace_git/RoboticsDiffusionTransformer/rdt-170m" \
     --pretrained_text_encoder_name_or_path=$TEXT_ENCODER_NAME \
     --pretrained_vision_encoder_name_or_path=$VISION_ENCODER_NAME \
     --output_dir=$OUTPUT_DIR \
@@ -51,4 +55,4 @@ deepspeed --hostfile=hostfile.txt main.py \
     # --resume_from_checkpoint="checkpoint-36000" \
     # Use this to load from saved lanuage instruction embeddings,
     # instead of calculating it during training
-    # --precomp_lang_embed \
+    --precomp_lang_embed \

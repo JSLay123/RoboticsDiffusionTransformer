@@ -43,7 +43,7 @@ def display_image_from_bytes(img_bytes):
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # 解码为彩色图像
     if img is not None:
         cv2.imshow("Decoded Image", img)
-        cv2.waitKey(10)
+        cv2.waitKey(1)
     else:
         print("Image decoding failed.")
 
@@ -99,10 +99,10 @@ def print_hdf5_file_info_and_display_images(file_path):
                     # 解析图片数据
                     print("Parsing images in observations:")
                     for image_key in dataset['images']:
-                        img_data = dataset['images'][image_key][:100]
+                        img_data = dataset['images'][image_key][:1000]
                         print(f"Displaying images from {image_key}:")
                         for i, img_array in enumerate(img_data):
-                            display_image_from_np(img_array)
+                            display_image_from_bytes(img_array)
             else:
                 print(f"\nDataset: {key}")
                 print(f"Shape: {dataset.shape}, dtype: {dataset.dtype}")
@@ -111,13 +111,13 @@ def print_hdf5_file_info_and_display_images(file_path):
                 print(f"Sample data (first 5 elements): {dataset[:5]}")
 
         # 等待按键关闭所有窗口
-        cv2.waitKey(0)
+        cv2.waitKey(1)
         cv2.destroyAllWindows()
 
 
 # 使用示例：读取指定路径下的HDF5文件并打印内容和显示图像
-file_path = "/home/silei/isaacsim/test_demo/task_arm_pickplace/create_data/task_pickplace/episode_003.hdf5"
-# print_hdf5_file_info_and_display_images(file_path)
-with h5py.File(file_path, 'r') as f:
-    print(type(f['observations']['images']['cam_high'][0]))
+file_path = "/home/silei/isaacsim/test_demo/task_arm_pickplace/create_data/task_pickplace/episode_020.hdf5"
+print_hdf5_file_info_and_display_images(file_path)
+# with h5py.File(file_path, 'r') as f:
+#     print(type(f['observations']['images']['cam_high'][0]))
 
