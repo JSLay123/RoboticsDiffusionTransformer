@@ -11,7 +11,6 @@ import numpy as np
 
 from configs.state_vec import STATE_VEC_IDX_MAPPING
 
-
 class HDF5VLADataset:
     """
     This class is used to sample episodes from the embododiment dataset
@@ -175,7 +174,7 @@ class HDF5VLADataset:
                 "step_id": step_id,
                 "instruction": instruction
             }
-            
+            # ------------------------------------------------------
             # # Rescale gripper to [0, 1]
             # qpos = qpos / np.array(
             #    [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
