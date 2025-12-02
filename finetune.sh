@@ -31,7 +31,7 @@ fi
 # deepspeed --hostfile=hostfile.txt main.py \
 accelerate launch main.py \
     --deepspeed="./configs/zero2.json" \
-    --pretrained_model_name_or_path="/home/silei/WorkSpace_git/RoboticsDiffusionTransformer/rdt-170m" \
+    --pretrained_model_name_or_path="/share/home/202311091692/silei_workspace/RoboticsDiffusionTransformer/rdt-1b" \
     --pretrained_text_encoder_name_or_path=$TEXT_ENCODER_NAME \
     --pretrained_vision_encoder_name_or_path=$VISION_ENCODER_NAME \
     --output_dir=$OUTPUT_DIR \
@@ -55,4 +55,4 @@ accelerate launch main.py \
     # --resume_from_checkpoint="checkpoint-36000" \
     # Use this to load from saved lanuage instruction embeddings,
     # instead of calculating it during training
-    --precomp_lang_embed \
+    # --precomp_lang_embed \
