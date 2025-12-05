@@ -12,15 +12,21 @@ from models.rdt_runner import RDTRunner
 
 
 # The indices that the raw vector should be mapped to in the unified action vector
+# AGILEX_STATE_INDICES = [
+#     STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+# ] + [
+#     STATE_VEC_IDX_MAPPING["left_gripper_open"]
+# ] + [
+#     STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
+# ] + [
+#     STATE_VEC_IDX_MAPPING[f"right_gripper_open"]
+# ]
+
 AGILEX_STATE_INDICES = [
-    STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
-] + [
-    STATE_VEC_IDX_MAPPING["left_gripper_open"]
-] + [
-    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
-] + [
-    STATE_VEC_IDX_MAPPING[f"right_gripper_open"]
-]
+                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(7)
+                ] + [
+                    STATE_VEC_IDX_MAPPING[f"right_gripper_joint_0_pos"]
+                ]
 
 
 # Create the RDT model
@@ -173,8 +179,12 @@ class RoboticDiffusionTransformerModel(object):
             state (torch.Tensor): The formatted vector for RDT ([B, N, 128]). 
         """
         # Rescale the gripper to the range of [0, 1]
+        # joints = joints / torch.tensor(
+        #     [[[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]]],
+        #     device=joints.device, dtype=joints.dtype
+        # )
         joints = joints / torch.tensor(
-            [[[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]]],
+            [[[1, 1, 1, 1, 1, 1, 1, 1]]],
             device=joints.device, dtype=joints.dtype
         )
         
@@ -212,7 +222,7 @@ class RoboticDiffusionTransformerModel(object):
         # Note that the action range and proprioception range are different
         # for Mobile ALOHA robot
         joints = joints * torch.tensor(
-            [[[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]]],
+            [[[1, 1, 1, 1, 1, 1, 1, 1]]],
             device=joints.device, dtype=joints.dtype
         )
         
