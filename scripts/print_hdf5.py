@@ -116,7 +116,7 @@ def print_hdf5_file_info_and_display_images(file_path):
 
 
 # 使用示例：读取指定路径下的HDF5文件并打印内容和显示图像
-file_path = "/home/silei/isaacsim/test_demo/task_arm_pickplace/create_data/task_pickplace/episode_020.hdf5"
+file_path = "/home/silei/isaacsim_4_5/test_demo/task_arm_pickplace/create_data/task_pickplace/episode_020.hdf5"
 print_hdf5_file_info_and_display_images(file_path)
 # with h5py.File(file_path, 'r') as f:
 #     print(type(f['observations']['images']['cam_high'][0]))
