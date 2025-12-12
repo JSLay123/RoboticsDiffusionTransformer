@@ -138,6 +138,7 @@ class RDT(nn.Module):
         lang_mask: (B, L_lang) or None, language condition mask (True for valid).
         img_mask: (B, L_img) or None, image condition mask (True for valid).
         """
+        # lang_c = lang_c.unsqueeze(0)
         t = self.t_embedder(t).unsqueeze(1)             # (B, 1, D) or (1, 1, D)
         freq = self.freq_embedder(freq).unsqueeze(1)    # (B, 1, D)
         # Append timestep to the input tokens
@@ -147,6 +148,11 @@ class RDT(nn.Module):
         
         # Add multimodal position embeddings
         x = x + self.x_pos_embed
+        # print(lang_c.shape)
+        # print(self.lang_cond_pos_embed.shape)
+        # print(img_c.shape)
+        # print(self.img_cond_pos_embed.shape)
+        
         # Note the lang is of variable length
         lang_c = lang_c + self.lang_cond_pos_embed[:, :lang_c.shape[1]]
         img_c = img_c + self.img_cond_pos_embed
