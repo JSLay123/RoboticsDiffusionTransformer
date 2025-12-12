@@ -54,7 +54,13 @@ class RDTRunner(
             in_features=state_token_dim * 2,    # state + state mask (indicator)
             out_features=hidden_size
         )
-        
+        # --- ADD: ensure adaptors have same dtype as model -------
+        model_dtype = next(self.model.parameters()).dtype
+        self.lang_adaptor.to(model_dtype)
+        self.img_adaptor.to(model_dtype)
+        self.state_adaptor.to(model_dtype)
+        # ---------------------------------------------------------
+
         # Create the noise scheduler
         noise_scheduler_config = config['noise_scheduler']
         self.noise_scheduler = DDPMScheduler(
@@ -110,6 +116,19 @@ class RDTRunner(
         
         return: adpated (..., hidden_size) for all input tokens
         '''
+        # Ensure tokens have same dtype as adaptors (and model)
+        adaptor_dtype = None
+        # pick dtype from lang_adaptor weights (they were moved to model dtype in __init__)
+        for p in self.lang_adaptor.parameters():
+            adaptor_dtype = p.dtype
+            break
+        if adaptor_dtype is None:
+            adaptor_dtype = lang_tokens.dtype
+
+        lang_tokens = lang_tokens.to(adaptor_dtype)
+        img_tokens = img_tokens.to(adaptor_dtype)
+        state_tokens = state_tokens.to(adaptor_dtype)
+
         adpated_lang = self.lang_adaptor(lang_tokens)
         adpated_img = self.img_adaptor(img_tokens)
         adpated_state = self.state_adaptor(state_tokens)
@@ -142,7 +161,17 @@ class RDTRunner(
         
         for t in self.noise_scheduler_sample.timesteps:
             # Prepare state-action trajectory
+            # action_traj = torch.cat([noisy_action, action_mask], dim=2)
+            # action_traj = self.state_adaptor(action_traj)
             action_traj = torch.cat([noisy_action, action_mask], dim=2)
+            # ensure action_traj has same dtype as state_adaptor weights
+            state_adaptor_dtype = None
+            for p in self.state_adaptor.parameters():
+                state_adaptor_dtype = p.dtype
+                break
+            if state_adaptor_dtype is not None:
+                action_traj = action_traj.to(state_adaptor_dtype)
+
             action_traj = self.state_adaptor(action_traj)
             state_action_traj = torch.cat([state_traj, action_traj], dim=1)
             
@@ -154,7 +183,9 @@ class RDTRunner(
             # Compute previous actions: x_t -> x_t-1
             noisy_action = self.noise_scheduler_sample.step(
                 model_output, t, noisy_action).prev_sample
-            noisy_action = noisy_action.to(state_traj.dtype)
+            # noisy_action = noisy_action.to(state_traj.dtype)
+            if state_adaptor_dtype is not None:
+                noisy_action = noisy_action.to(state_adaptor_dtype)
         
         # Finally apply the action mask to mask invalid action dimensions
         noisy_action = noisy_action * action_mask
